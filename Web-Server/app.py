@@ -62,7 +62,7 @@ def main():
         
         return results
 
-@app.route('/')
+@app.route('/coordinates')
 def index():
     results = main()
     if results is not None:
