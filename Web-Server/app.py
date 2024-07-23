@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2 import sql
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -10,6 +10,8 @@ DB_PORT = '5432'
 DB_NAME = 'WebMapData'
 DB_USER = 'postgres'
 DB_PASSWORD = input("Enter db password: ")
+
+# \\ Helper functions //
 
 def connect_to_db():
     try:
@@ -44,27 +46,35 @@ def execute_query(cursor, query, params=None):
         print(f"Error executing query: {e}")
         return None
 
-def main():
+def process_coordinates(data):
     conn, cursor = connect_to_db()
     
     if conn is not None and cursor is not None:
-        column_name = 'lga'
-        value = 'GOLDEN PLAINS'
-        
-        query = sql.SQL("SELECT lu_desc FROM landuse_2017 WHERE {column} = %s").format(
-            column=sql.Identifier(column_name)
-        )
-        params = (value,)
-        
-        results = execute_query(cursor, query, params)
-        
-        close_connection(conn, cursor)
-        
-        return results
+        north_east = data.get('NE')
+        south_west = data.get('SW')
 
-@app.route('/coordinates')
-def index():
-    results = main()
+        xmin = south_west['lng']
+        ymin = south_west['lat']
+        xmax = north_east['lng']
+        ymax = north_east['lat']
+
+        query = sql.SQL("SELECT * FROM landuse_2017 WHERE ST_Within(geom, ST_MakeEnvelope(%s, %s, %s, %s, 3857))")
+
+        results = execute_query(cursor, query, (xmin, ymin, xmax, ymax))
+
+        close_connection(conn, cursor)
+
+        return results
+    else:
+        return None
+
+# \\ Flask endpoint //
+
+@app.route('/coordinates', methods=['POST'])
+def receive_coordinates():
+    data = request.json
+    results = process_coordinates(data)
+
     if results is not None:
         return jsonify(results)
     else:

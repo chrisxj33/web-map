@@ -66,11 +66,11 @@ document.getElementById('get-data-btn').addEventListener('click', function() {
 
             // Send to Flask endpoint
             fetch('http://127.0.0.1:5000/coordinates', {
-                    method: 'POST', // Set POST since sending data
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json' // Tell server content is in JSON format
+                        'Content-Type': 'application/json' // Tell server content in JSON format
                     },
-                    body: JSON.stringify(data) // The data itself (as JSON)
+                    body: JSON.stringify(data) // The data being sent
                 })
                 .then(response => response.json()) // The response from the server once sent
                 .then(data => {
