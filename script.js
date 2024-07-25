@@ -81,3 +81,5 @@ document.getElementById('get-data-btn').addEventListener('click', function() {
             });
     });
 });
+
+// Render the data to leaflet

@@ -64,7 +64,7 @@ def process_coordinates(data):
         xmax = north_east['lng']
         ymax = north_east['lat']
 
-        query = sql.SQL("SELECT * FROM landuse_2017 WHERE ST_Within(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))")
+        query = sql.SQL("SELECT ST_AsText(geom) AS wkt_geom, * FROM landuse_2017 WHERE ST_Within(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))")
 
         results = execute_query(cursor, query, (xmin, ymin, xmax, ymax))
 
@@ -79,7 +79,8 @@ def process_coordinates(data):
 @app.route('/coordinates', methods=['POST'])
 def receive_coordinates():
     data = request.json
-    logging.debug(f"Received data: {data}")
+    logging.debug(f"## Received data ##")
+    logging.debug(data)
     results = process_coordinates(data)
 
     if results is not None:
