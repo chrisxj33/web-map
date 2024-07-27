@@ -2,13 +2,18 @@
 var map = L.map('map').setView([-37, 144], 8);
 
 // Add a tile layer
-L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 }).addTo(map);
 
-// Initialize the FeatureGroup to store editable layers
+
+// Initialize the FeatureGroup to store editable (user defined) layers
 var editableLayers = new L.FeatureGroup();
 map.addLayer(editableLayers);
+
+// Initialize the FeatureGroup to store queried layers
+var queriedLayers = new L.FeatureGroup();
+map.addLayer(queriedLayers);
 
 // Customize the draw control to show only the rectangle button
 var drawControl = new L.Control.Draw({
@@ -43,6 +48,7 @@ map.on(L.Draw.Event.CREATED, function (event) {
 
 });
 
+// Map land use types to colours for visualisation
 var landuseColors = {
     "Abandoned irrigated land": "grey",
     "Abandoned manufacturing and industrial": "grey",
@@ -169,14 +175,42 @@ var landuseColors = {
     "Wood production forestry": "green"
 };
 
+// Helper function for get-data-btn
+function map_data(data) {
+    // Clear editable layers
+    editableLayers.clearLayers();
+
+    // Clear querried layers
+    queriedLayers.clearLayers();
+
+    // Loop through the returned data
+    data.forEach(row => {
+        // Get attributes
+        var geometry = row[0];
+        var area_desc = row[21];
+
+        // Convert WKT to GeoJSON using Wicket
+        var wkt = new Wkt.Wkt();
+        wkt.read(geometry);
+        var geojson = wkt.toJson();
+
+        // Add data to map
+        L.geoJSON(geojson, {
+            style: {
+                color: landuseColors[area_desc] || 'black', // Fallback to 'black' if no color
+                weight: 1,
+                fillOpacity: 0.5
+            }
+        }).addTo(queriedLayers);
+    });
+}
+
 // Add event listener to the button
 document.getElementById('get-data-btn').addEventListener('click', function() {
     editableLayers.eachLayer(function(layer) {
         var bounds = layer.getBounds();
         var northEast = bounds.getNorthEast();
         var southWest = bounds.getSouthWest();
-        // console.log('North-East:', northEast);
-        // console.log('South-West:', southWest);
 
         // Prepare the data for transit
         var data = {
@@ -192,41 +226,21 @@ document.getElementById('get-data-btn').addEventListener('click', function() {
 
         // Send to Flask endpoint
         fetch('http://127.0.0.1:5000/coordinates', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json' // Tell server content in JSON format
-                },
-                body: JSON.stringify(data) // The data being sent
-            })
-            .then(response => response.json()) // The response from the server once sent
-            .then(data => {
-                console.log('Success:', data);
-
-                // Clear existing layers on success
-                editableLayers.clearLayers();
-
-                // Loop through the returned data
-                data.forEach(row => {
-                    // Get attributes
-                    var geometry = row[0];
-                    // var area_name = row[5];
-                    var area_desc = row[21];
-
-                    // Convert WKT to GeoJSON using Wicket
-                    var wkt = new Wkt.Wkt();
-                    wkt.read(geometry);
-                    var geojson = wkt.toJson();
-
-                    // Add data to map
-                    L.geoJSON(geojson, {
-                        style: {
-                            color: landuseColors[area_desc] || 'black' // Fallback to 'black' if no color
-                        }
-                    }).addTo(editableLayers);
-                });
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' // Tell server content in JSON format
+            },
+            body: JSON.stringify(data) // The data being sent
+        })
+        .then(response => response.json()) // The response from the server once sent
+        .then(data => {
+            console.log('Success:', data);
+            
+            // On success, map the data
+            map_data(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
     });
 });
