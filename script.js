@@ -6,7 +6,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 }).addTo(map);
 
-
 // Initialize the FeatureGroup to store editable (user defined) layers
 var editableLayers = new L.FeatureGroup();
 map.addLayer(editableLayers);
@@ -36,6 +35,22 @@ var drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
+// Disable the get-data-btn initially
+var getDataBtn = document.getElementById('get-data-btn');
+getDataBtn.disabled = true;
+getDataBtn.style.backgroundColor = "grey";
+
+// Function to check if editableLayers is empty and enable/disable button
+function updateButtonState() {
+    if (editableLayers.getLayers().length === 0) {
+        getDataBtn.disabled = true;
+        getDataBtn.style.backgroundColor = "grey";
+    } else {
+        getDataBtn.disabled = false;
+        getDataBtn.style.backgroundColor = ""; // Reset to default
+    }
+}
+
 // Add created layers to the map and clear existing layers
 map.on(L.Draw.Event.CREATED, function (event) {
     var layer = event.layer;
@@ -45,6 +60,9 @@ map.on(L.Draw.Event.CREATED, function (event) {
     
     // Add the new layer
     editableLayers.addLayer(layer);
+
+    // Allow button to be clickable
+    updateButtonState()
 
 });
 
@@ -177,11 +195,15 @@ var landuseColors = {
 
 // Helper function for get-data-btn
 function map_data(data) {
+
     // Clear editable layers
     editableLayers.clearLayers();
 
     // Clear querried layers
     queriedLayers.clearLayers();
+
+    // Make button no longer clickable
+    updateButtonState()
 
     // Loop through the returned data
     data.forEach(row => {
