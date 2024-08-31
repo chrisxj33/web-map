@@ -1,11 +1,10 @@
-<<<<<<< HEAD
 # **Web-Based GIS Application for Land Use Visualisation**
 
 ## **Overview**
 
 This project is a web-based Geographic Information System (GIS) application that enables users to visualise land use data within a specific area on a map. The application allows users to interactively select regions and retrieve corresponding land use information from a spatial database. The system is built using modern web technologies alongside a PostgreSQL database with PostGIS extensions for handling spatial queries.
 
-![image](https://github.com/user-attachments/assets/275f1106-5f94-47a5-9685-c719b99f9a2c)
+![Screenshot 2024-08-31 214507](https://github.com/user-attachments/assets/5302511a-6c9e-410e-9f83-51a5bfe291a3)
 
 ## **Technologies Used**
 
@@ -62,6 +61,3 @@ This project is a web-based Geographic Information System (GIS) application that
 
 3. **Data Visualisation:**
    - The backend returns the data in GeoJSON format, and the frontend renders it on the map with color coding based on land use types.
-=======
-# web-map
->>>>>>> de24595be5c0ae8fdfd9ddbcf1ca28cb896c1186
